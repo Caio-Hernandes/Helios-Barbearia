@@ -1,0 +1,95 @@
+.root {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.root svg {
+  display: block;
+  overflow: visible;
+}
+
+.grid {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.baseline {
+  stroke: var(--chart-baseline);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.yTick,
+.xTick {
+  fill: var(--text-subtle);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.yTick {
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+
+.xTick {
+  text-anchor: middle;
+}
+
+.bar {
+  fill: var(--chart-mark);
+  transition: opacity 0.12s ease;
+}
+
+.dimmed {
+  opacity: 0.45;
+}
+
+.hit {
+  fill: transparent;
+  cursor: default;
+  outline: none;
+}
+
+.hit:focus-visible {
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 140px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow);
+  font-size: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.tooltip strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.detail {
+  color: var(--text-subtle);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

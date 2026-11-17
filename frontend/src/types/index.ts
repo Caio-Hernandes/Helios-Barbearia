@@ -86,6 +86,8 @@ export interface Appointment {
   status: AppointmentStatus;
   notes: string | null;
   canceledAt: string | null;
+  /** Concluído automaticamente pelo sistema (horário vencido sem baixa) */
+  autoCompleted: boolean;
   createdAt: string;
   updatedAt: string;
   catalog: { id: string; name: string; durationMinutes: number };

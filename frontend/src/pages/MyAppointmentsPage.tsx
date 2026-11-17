@@ -2,35 +2,46 @@ import { CalendarPlus, Clock, Scissors, StickyNote, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { EmptyState, ErrorAlert, Spinner } from '../components/ui/Feedback';
+import { PeriodFilter } from '../components/ui/PeriodFilter';
 import { PageHeader } from '../components/ui/PageHeader';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { CLIENT_CANCEL_LIMIT_MINUTES } from '../config';
 import { useAsync } from '../hooks/useAsync';
 import { useNow } from '../hooks/useNow';
+import { usePeriod, type PeriodPreset } from '../hooks/usePeriod';
 import { appointmentsService } from '../services/appointments.service';
 import { errorMessage } from '../services/http';
 import type { Appointment } from '../types';
-import { formatCurrency, formatLongDate, formatTime, toLocalDate } from '../utils/format';
+import { isInRange, monthOf, weekOf } from '../utils/dateRanges';
+import { formatCurrency, formatLongDate, formatTime, toLocalDate, todayLocalDate } from '../utils/format';
 import styles from './MyAppointmentsPage.module.css';
 
 type Tab = 'upcoming' | 'history';
+
+const PERIODS: PeriodPreset[] = [
+  { key: 'all', label: 'Qualquer data', range: () => ({}) },
+  { key: 'today', label: 'Hoje', range: () => ({ from: todayLocalDate(), to: todayLocalDate() }) },
+  { key: 'week', label: 'Esta semana', range: () => weekOf(todayLocalDate()) },
+  { key: 'month', label: 'Este mês', range: () => monthOf(todayLocalDate()) },
+];
 
 export function MyAppointmentsPage() {
   const { data, loading, error, reload } = useAsync(() => appointmentsService.list(), []);
   const now = useNow();
   const [tab, setTab] = useState<Tab>('upcoming');
+  const period = usePeriod(PERIODS, 'all');
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const { upcoming, history } = useMemo(() => {
-    const all = data ?? [];
+    const all = (data ?? []).filter((a) => isInRange(toLocalDate(a.startsAt), period.range));
     const isUpcoming = (a: Appointment) => a.status === 'SCHEDULED' && new Date(a.endsAt).getTime() >= now;
     return {
       upcoming: all.filter(isUpcoming),
       history: all.filter((a) => !isUpcoming(a)).reverse(),
     };
-  }, [data, now]);
+  }, [data, now, period.range]);
 
   const list = tab === 'upcoming' ? upcoming : history;
 
@@ -60,13 +71,16 @@ export function MyAppointmentsPage() {
         }
       />
 
-      <div className={styles.tabs} role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'upcoming'} onClick={() => setTab('upcoming')}>
-          Próximos <span>{upcoming.length}</span>
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'history'} onClick={() => setTab('history')}>
-          Histórico <span>{history.length}</span>
-        </button>
+      <div className={styles.toolbar}>
+        <div className={styles.tabs} role="tablist">
+          <button type="button" role="tab" aria-selected={tab === 'upcoming'} onClick={() => setTab('upcoming')}>
+            Próximos <span>{upcoming.length}</span>
+          </button>
+          <button type="button" role="tab" aria-selected={tab === 'history'} onClick={() => setTab('history')}>
+            Histórico <span>{history.length}</span>
+          </button>
+        </div>
+        <PeriodFilter period={period} align="right" />
       </div>
 
       {actionError && <ErrorAlert message={actionError} />}
@@ -77,7 +91,13 @@ export function MyAppointmentsPage() {
         <div className="card">
           <EmptyState
             title={tab === 'upcoming' ? 'Nenhum horário agendado' : 'Nenhum atendimento no histórico'}
-            description={tab === 'upcoming' ? 'Que tal reservar seu próximo corte?' : undefined}
+            description={
+              period.selected !== 'all'
+                ? 'Nada neste período. Tente outro intervalo de datas.'
+                : tab === 'upcoming'
+                  ? 'Que tal reservar seu próximo corte?'
+                  : undefined
+            }
             action={
               tab === 'upcoming' && (
                 <Link to="/agendar" className="btn btn-primary btn-sm">

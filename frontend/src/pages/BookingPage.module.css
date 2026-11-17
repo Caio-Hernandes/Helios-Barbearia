@@ -1,27 +1,50 @@
+/*
+ * Etapas à esquerda e resumo à direita. O resumo ocupa as linhas de
+ * Serviço e Profissional, então termina na mesma altura do card de Profissional.
+ */
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-areas:
+    'service summary'
+    'barber summary'
+    'time .';
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
 
 @media (max-width: 1080px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'service'
+      'barber'
+      'time'
+      'summary';
   }
 }
 
-.steps {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-width: 0;
+.areaService {
+  grid-area: service;
 }
 
-.steps > section {
+.areaBarber {
+  grid-area: barber;
+}
+
+.areaTime {
+  grid-area: time;
+}
+
+.areaSummary {
+  grid-area: summary;
+}
+
+.step {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 .stepTitle {
@@ -161,6 +184,16 @@
   font-weight: 600;
 }
 
+.slotsArea {
+  transition: opacity 0.15s ease;
+}
+
+/* Esmaece só se a busca passar de 150 ms; ao terminar, volta na hora */
+.refreshing {
+  opacity: 0.5;
+  transition-delay: 0.15s;
+}
+
 .slots {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
@@ -169,17 +202,19 @@
 
 /* Resumo */
 .summary {
-  position: sticky;
-  top: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-@media (max-width: 1080px) {
-  .summary {
-    position: static;
-  }
+/* O campo de observações cresce para o botão terminar alinhado com o card de Profissional */
+.notesField {
+  flex: 1;
+}
+
+.notesField textarea {
+  flex: 1;
+  min-height: 84px;
 }
 
 .summaryList {

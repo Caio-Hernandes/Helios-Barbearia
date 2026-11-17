@@ -15,6 +15,13 @@ export const MAX_BOOKING_ADVANCE_DAYS = 30;
 /** Até quanto tempo antes do horário o CLIENTE pode cancelar. */
 export const CLIENT_CANCEL_LIMIT_MINUTES = 60;
 
+/**
+ * De quanto em quanto tempo a API conclui sozinha os horários vencidos sem baixa
+ * (status ainda SCHEDULED depois do horário de término). O barbeiro do atendimento
+ * ou o dono podem trocar depois para "não compareceu".
+ */
+export const AUTO_COMPLETE_INTERVAL_MINUTES = 5;
+
 /** Retorna a mensagem da regra violada, ou null se o horário pode ser agendado. */
 export function bookingWindowViolation(start: DateTime, now: DateTime = DateTime.now()): string | null {
   if (start <= now) {

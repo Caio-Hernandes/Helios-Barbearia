@@ -26,9 +26,23 @@ async function findVisible(actor: Actor, id: string) {
   return appointment;
 }
 
+const STATUS_LABEL: Record<AppointmentStatus, string> = {
+  SCHEDULED: 'Agendado',
+  COMPLETED: 'Concluído',
+  CANCELED: 'Cancelado',
+  NO_SHOW: 'Não compareceu',
+};
+
+/** Status que o barbeiro/dono podem ajustar depois do horário (o cancelado libera a vaga e não volta). */
+const EDITABLE_STATUSES: AppointmentStatus[] = [
+  AppointmentStatus.SCHEDULED,
+  AppointmentStatus.COMPLETED,
+  AppointmentStatus.NO_SHOW,
+];
+
 function assertScheduled(appointment: AppointmentDetails) {
   if (appointment.status !== AppointmentStatus.SCHEDULED) {
-    throw new BusinessRuleError(`Este agendamento já está com status ${appointment.status}.`);
+    throw new BusinessRuleError(`Este agendamento já está como "${STATUS_LABEL[appointment.status]}".`);
   }
 }
 
@@ -116,18 +130,31 @@ export const appointmentsService = {
     return appointmentsRepository.update(id, { status: AppointmentStatus.CANCELED, canceledAt: new Date() });
   },
 
-  /** Barbeiro do agendamento (ou o dono) marca como concluído ou não comparecimento. */
+  /**
+   * Barbeiro do agendamento (ou o dono) marca como concluído ou não comparecimento.
+   * Também corrige uma baixa já dada (inclusive a automática): concluído <-> não compareceu.
+   */
   async updateStatus(actor: Actor, id: string, { status }: UpdateStatusInput) {
     const appointment = await findVisible(actor, id);
     if (actor.role !== Role.OWNER && appointment.barberId !== actor.id) {
       throw new ForbiddenError('Apenas o barbeiro do agendamento ou o dono podem alterar o status.');
     }
-    assertScheduled(appointment);
-
+    if (!EDITABLE_STATUSES.includes(appointment.status)) {
+      throw new BusinessRuleError(`Agendamentos com status "${STATUS_LABEL[appointment.status]}" não podem ser alterados.`);
+    }
+    if (appointment.status === status) {
+      throw new BusinessRuleError(`O agendamento já está como "${STATUS_LABEL[status]}".`);
+    }
     if (appointment.startsAt > new Date()) {
       throw new BusinessRuleError('Só é possível concluir ou marcar falta depois do horário de início.');
     }
 
-    return appointmentsRepository.update(id, { status });
+    // Alteração manual: deixa de contar como baixa automática
+    return appointmentsRepository.update(id, { status, autoCompleted: false });
+  },
+
+  /** Conclui os horários vencidos sem baixa (chamado periodicamente pelo job). */
+  autoCompleteOverdue(now = new Date()) {
+    return appointmentsRepository.completeOverdue(now);
   },
 };

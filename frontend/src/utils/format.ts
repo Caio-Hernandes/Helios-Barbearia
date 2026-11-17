@@ -50,6 +50,14 @@ export const monthShort = (date: string) =>
 
 const capitalizeFirst = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
+/** "Ter, 17 nov 2026" */
+export const formatShortDate = (date: string) =>
+  `${capitalizeFirst(weekdayShort(date))}, ${dayOfMonth(date)} ${monthShort(date)} ${date.slice(0, 4)}`;
+
+/** "Novembro de 2026" */
+export const monthYearLabel = (date: string) =>
+  capitalizeFirst(fromLocalDate(date).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }));
+
 /** "Quarta-feira, 18 de novembro" */
 export const formatLongDate = (date: string) =>
   capitalizeFirst(

@@ -25,6 +25,10 @@
   --info: #8fb9ec;
   --info-soft: rgba(143, 185, 236, 0.13);
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  /* Marcas de gráfico: verde validado (faixa de luminosidade e croma) para a superfície escura */
+  --chart-mark: #3da36c;
+  --chart-grid: #232a26;
+  --chart-baseline: #3a443e;
   --chart-1: #96cba8;
   --chart-2: #8fb9ec;
   --chart-3: #e6bf78;
@@ -57,6 +61,9 @@
   --info: #2e6bb0;
   --info-soft: rgba(46, 107, 176, 0.1);
   --shadow: 0 12px 32px rgba(20, 32, 25, 0.08);
+  --chart-mark: #2f8656;
+  --chart-grid: #e8ece9;
+  --chart-baseline: #c9d1cb;
   --chart-1: #2f8656;
   --chart-2: #2e6bb0;
   --chart-3: #c58a1f;
@@ -341,6 +348,8 @@ select.input {
   background: var(--surface-2);
   font-weight: 600;
   font-size: 14px;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 

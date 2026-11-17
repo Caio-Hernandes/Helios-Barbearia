@@ -55,6 +55,8 @@ Os valores ficam em `src/domain/scheduling/scheduling.rules.ts`.
 - Antecedência **mínima de 1 hora** e **máxima de 30 dias**. Horários no passado são recusados.
 - Os horários seguem uma grade de 15 em 15 minutos e precisam caber inteiros dentro do expediente.
 - O **cliente** pode cancelar até **1 hora antes**. O barbeiro do agendamento e o dono podem cancelar a qualquer momento.
+- **Baixa automática:** a cada 5 minutos (e ao subir a API), os agendamentos cujo horário de término já passou e que continuam como `SCHEDULED` viram `COMPLETED`, com `autoCompleted: true`. O job fica em `src/jobs/auto-complete.job.ts`.
+- **Correção de baixa:** depois do horário de início, o barbeiro do agendamento ou o dono podem marcar `COMPLETED` ou `NO_SHOW`, e trocar entre os dois a qualquer momento (inclusive uma baixa automática). Toda alteração manual deixa `autoCompleted: false`. Agendamentos cancelados não podem ser alterados.
 - Um barbeiro não pode ter dois agendamentos ativos sobrepostos. Isso é garantido também pelo banco (constraint `appointment_no_overlap`), o que cobre reservas simultâneas.
 - Um cliente também não pode ter dois agendamentos ao mesmo tempo.
 - Só é possível criar um bloqueio (folga) num período sem agendamentos ativos.
@@ -99,7 +101,7 @@ Público = não precisa de token.
 | GET | `/appointments?date=&from=&to=&barberId=&status=` | CLIENT vê os seus · EMPLOYEE vê os atribuídos a si · OWNER vê todos |
 | GET | `/appointments/:appointmentId` | quem participa do agendamento, ou o OWNER |
 | PATCH | `/appointments/:appointmentId/cancel` | cliente (até 1h antes), barbeiro do agendamento ou OWNER |
-| PATCH | `/appointments/:appointmentId/status` | barbeiro do agendamento ou OWNER. Corpo: `{ status: "COMPLETED" \| "NO_SHOW" }`, só depois do horário de início |
+| PATCH | `/appointments/:appointmentId/status` | barbeiro do agendamento ou OWNER. Corpo: `{ status: "COMPLETED" \| "NO_SHOW" }`, só depois do horário de início. Também corrige uma baixa já dada |
 
 ### Usuários
 | Método | Rota | Acesso |

@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Phone, Scissors, StickyNote, User } from 'lucide-react';
 import { useState } from 'react';
+import { DatePicker } from '../components/ui/DatePicker';
 import { EmptyState, ErrorAlert, Spinner } from '../components/ui/Feedback';
 import { PageHeader } from '../components/ui/PageHeader';
 import { StatusBadge } from '../components/ui/StatusBadge';
@@ -93,13 +94,7 @@ export function SchedulePage() {
           <button type="button" className="icon-btn" onClick={() => setDate((d) => addDays(d, -1))} aria-label="Dia anterior">
             <ChevronLeft size={20} />
           </button>
-          <input
-            type="date"
-            className={`input ${styles.dateInput}`}
-            value={date}
-            onChange={(e) => e.target.value && setDate(e.target.value)}
-            aria-label="Data"
-          />
+          <DatePicker value={date} onChange={setDate} label="Data" />
           <button type="button" className="icon-btn" onClick={() => setDate((d) => addDays(d, 1))} aria-label="Próximo dia">
             <ChevronRight size={20} />
           </button>
@@ -146,6 +141,11 @@ export function SchedulePage() {
                   <div className={styles.titleRow}>
                     <h3>{a.client.name}</h3>
                     <StatusBadge status={a.status} />
+                    {a.autoCompleted && (
+                      <span className={styles.autoTag} title="Concluído pelo sistema porque o horário venceu sem baixa">
+                        automático
+                      </span>
+                    )}
                   </div>
                   <p className={styles.meta}>
                     <span>
@@ -203,6 +203,20 @@ export function SchedulePage() {
                         </button>
                       </>
                     )}
+                  </div>
+                )}
+
+                {/* Correção de baixa (inclusive a automática): concluído <-> não compareceu */}
+                {(a.status === 'COMPLETED' || a.status === 'NO_SHOW') && (
+                  <div className={styles.actions}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      disabled={busy}
+                      onClick={() => runAction(a, a.status === 'COMPLETED' ? 'NO_SHOW' : 'COMPLETED')}
+                    >
+                      {a.status === 'COMPLETED' ? 'Marcar falta' : 'Marcar como concluído'}
+                    </button>
                   </div>
                 )}
               </article>

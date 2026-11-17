@@ -1,0 +1,45 @@
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.alignRight {
+  align-items: flex-end;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.alignRight .chips {
+  justify-content: flex-end;
+}
+
+.custom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .alignRight {
+    align-items: flex-start;
+  }
+
+  .alignRight .chips {
+    justify-content: flex-start;
+  }
+
+  /* Rolagem horizontal dos atalhos em telas estreitas */
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+}

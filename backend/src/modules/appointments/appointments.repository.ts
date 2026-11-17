@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { AppointmentStatus, Prisma } from '@prisma/client';
 import { prisma } from '../../shared/database/prisma';
 
 const appointmentInclude = {
@@ -35,5 +35,14 @@ export const appointmentsRepository = {
 
   update(id: string, data: Prisma.AppointmentUncheckedUpdateInput) {
     return prisma.appointment.update({ where: { id }, data, include: appointmentInclude });
+  },
+
+  /** Conclui os agendamentos ativos cujo horário já terminou. Retorna quantos foram alterados. */
+  async completeOverdue(now: Date): Promise<number> {
+    const { count } = await prisma.appointment.updateMany({
+      where: { status: AppointmentStatus.SCHEDULED, endsAt: { lte: now } },
+      data: { status: AppointmentStatus.COMPLETED, autoCompleted: true },
+    });
+    return count;
   },
 };
