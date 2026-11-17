@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  EMPLOYEE
+  OWNER
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CANCELED
+  COMPLETED
+  NO_SHOW
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         Role     @default(CLIENT)
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+
+  clientAppointments Appointment[]  @relation("ClientAppointments")
+  barberAppointments Appointment[]  @relation("BarberAppointments")
+  workingHours       WorkingHours[]
+  timeOffs           TimeOff[]
+}
+
+model Catalog {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  priceCents      Int
+  durationMinutes Int
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+
+  appointments Appointment[]
+}
+
+/// A constraint de exclusão "appointment_no_overlap" (impede dois agendamentos
+/// ativos sobrepostos para o mesmo barbeiro) é criada via SQL na migration init.
+model Appointment {
+  id         String            @id @default(uuid())
+  clientId   String
+  barberId   String
+  catalogId  String
+  startsAt   DateTime          @db.Timestamptz(3)
+  endsAt     DateTime          @db.Timestamptz(3)
+  /// Preço no momento da reserva (o preço do serviço pode mudar depois)
+  priceCents Int
+  status     AppointmentStatus @default(SCHEDULED)
+  notes      String?
+  canceledAt DateTime?         @db.Timestamptz(3)
+  createdAt  DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime          @updatedAt @db.Timestamptz(3)
+
+  client  User    @relation("ClientAppointments", fields: [clientId], references: [id])
+  barber  User    @relation("BarberAppointments", fields: [barberId], references: [id])
+  catalog Catalog @relation(fields: [catalogId], references: [id])
+
+  @@index([barberId, startsAt])
+  @@index([clientId, startsAt])
+}
+
+/// Expediente semanal do barbeiro. Pode haver mais de um intervalo por dia
+/// (ex.: 09:00-12:00 e 13:00-19:00 para incluir o almoço).
+model WorkingHours {
+  id        String @id @default(uuid())
+  barberId  String
+  /// 0 = domingo ... 6 = sábado
+  weekday   Int
+  /// "HH:mm" no fuso America/Sao_Paulo
+  startTime String
+  endTime   String
+
+  barber User @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([barberId, weekday, startTime])
+}
+
+/// Bloqueios pontuais: folgas, férias, feriados, compromissos.
+model TimeOff {
+  id        String   @id @default(uuid())
+  barberId  String
+  startsAt  DateTime @db.Timestamptz(3)
+  endsAt    DateTime @db.Timestamptz(3)
+  reason    String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  barber User @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@index([barberId, startsAt])
+}

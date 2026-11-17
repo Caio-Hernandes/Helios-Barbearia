@@ -1,0 +1,1277 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-17T16:04:34.714Z",
+  "__export_source": "insomnia.desktop.app:v8.6.1",
+  "resources": [
+    {
+      "_id": "wrk_helios",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "Barbearia Hélios API",
+      "scope": "collection",
+      "description": "Rode na ordem: pasta 1 (logins) primeiro, depois 2 → 6. Os tokens e ids são gravados no ambiente automaticamente pelos after-response scripts (aba Scripts de cada requisição). Ajuste a variável \"date\" para uma terça a sábado dentro dos próximos 30 dias."
+    },
+    {
+      "_id": "env_helios_base",
+      "_type": "environment",
+      "parentId": "wrk_helios",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3333",
+        "date": "2026-11-18",
+        "token_cliente": "",
+        "token_rafael": "",
+        "token_helio": "",
+        "barber_id": "",
+        "helio_id": "",
+        "catalog_id": "",
+        "created_catalog_id": "",
+        "slot_starts_at": "",
+        "appointment_id": "",
+        "time_off_id": "",
+        "novo_cliente_email": "",
+        "token_novo_cliente": ""
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url",
+          "date",
+          "token_cliente",
+          "token_rafael",
+          "token_helio",
+          "barber_id",
+          "helio_id",
+          "catalog_id",
+          "created_catalog_id",
+          "slot_starts_at",
+          "appointment_id",
+          "time_off_id",
+          "novo_cliente_email",
+          "token_novo_cliente"
+        ]
+      }
+    },
+    {
+      "_id": "fld_cycle",
+      "_type": "request_group",
+      "parentId": "wrk_helios",
+      "name": "0. Ciclo completo (novo cliente)",
+      "description": "Rode as requisições desta pasta de cima para baixo. Ela é independente das outras pastas.",
+      "metaSortKey": 1
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('token_rafael', body.accessToken);\n}",
+      "_id": "cyc_login_rafael",
+      "_type": "request",
+      "parentId": "fld_cycle",
+      "name": "1. Login do atendente (Rafael)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"rafael@helios.test\",\n  \"password\": \"Helios@2026\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 2,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "cyc_agenda_before",
+      "_type": "request",
+      "parentId": "fld_cycle",
+      "name": "2. Agenda do Rafael no dia (antes)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/appointments?date={{ _.date }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_rafael }}"
+      },
+      "metaSortKey": 3,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('novo_cliente_email', body.user.email);\n}",
+      "_id": "cyc_register",
+      "_type": "request",
+      "parentId": "fld_cycle",
+      "name": "3. Cliente se cadastra",
+      "description": "E-mail aleatório; ele fica guardado em novo_cliente_email para o login.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/register",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"João da Silva\",\n  \"email\": \"{% faker 'randomEmail' %}\",\n  \"phone\": \"11955554444\",\n  \"password\": \"senhaforte123\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 4,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('token_novo_cliente', body.accessToken);\n}",
+      "_id": "cyc_login_client",
+      "_type": "request",
+      "parentId": "fld_cycle",
+      "name": "4. Cliente faz login",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"{{ _.novo_cliente_email }}\",\n  \"password\": \"senhaforte123\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 5,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('catalog_id', body.find((item) => item.name === 'Corte na tesoura e Barba').id);\n}",
+      "_id": "cyc_catalog",
+      "_type": "request",
+      "parentId": "fld_cycle",
+      "name": "5. Cliente vê o catálogo",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/catalog",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 6,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('barber_id', body.find((b) => b.name === 'Rafael').id);\n  insomnia.environment.set('helio_id', body.find((b) => b.name === 'Hélio').id);\n}",
+      "_id": "cyc_barbers",
+      "_type": "request",
+      "parentId": "fld_cycle",
+      "name": "6. Cliente vê os barbeiros",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/barbers",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 7,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('slot_starts_at', body.slots.length ? body.slots[0].startsAt : '');\n}",
+      "_id": "cyc_availability",
+      "_type": "request",
+      "parentId": "fld_cycle",
+      "name": "7. Cliente vê os horários do Rafael",
+      "description": "O primeiro horário livre fica em slot_starts_at.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/barbers/{{ _.barber_id }}/availability?date={{ _.date }}&catalogId={{ _.catalog_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_novo_cliente }}"
+      },
+      "metaSortKey": 8,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('appointment_id', body.id);\n}",
+      "_id": "cyc_book",
+      "_type": "request",
+      "parentId": "fld_cycle",
+      "name": "8. Cliente agenda o horário",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/appointments",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"barberId\": \"{{ _.barber_id }}\",\n  \"catalogId\": \"{{ _.catalog_id }}\",\n  \"startsAt\": \"{{ _.slot_starts_at }}\",\n  \"notes\": \"Primeira vez na barbearia\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_novo_cliente }}"
+      },
+      "metaSortKey": 9,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "cyc_agenda_after",
+      "_type": "request",
+      "parentId": "fld_cycle",
+      "name": "9. Agenda do Rafael no dia (depois)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/appointments?date={{ _.date }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_rafael }}"
+      },
+      "metaSortKey": 10,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_helios",
+      "name": "1. Auth",
+      "description": "Rode os três logins primeiro: eles alimentam os tokens do ambiente.",
+      "metaSortKey": 11
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('token_cliente', body.accessToken);\n}",
+      "_id": "req_login_cliente",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login - Cliente",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"cliente@helios.test\",\n  \"password\": \"Helios@2026\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 12,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('token_rafael', body.accessToken);\n}",
+      "_id": "req_login_rafael",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login - Rafael (funcionário)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"rafael@helios.test\",\n  \"password\": \"Helios@2026\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 13,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('token_helio', body.accessToken);\n}",
+      "_id": "req_login_helio",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login - Hélio (dono)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"helio@helios.test\",\n  \"password\": \"Helios@2026\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 14,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_register",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Cadastro de cliente",
+      "description": "E-mail aleatório a cada envio. Cria sempre um CLIENT.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/register",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Novo Cliente\",\n  \"email\": \"{% faker 'randomEmail' %}\",\n  \"phone\": \"11977776666\",\n  \"password\": \"senhaforte123\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 15,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_me",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Me (cliente)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/me",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cliente }}"
+      },
+      "metaSortKey": 16,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_refresh",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Refresh token",
+      "description": "Usa o cookie httpOnly guardado pelo Insomnia. Ele pertence ao ÚLTIMO login feito.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/refresh",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 17,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_logout",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Logout",
+      "description": "Apaga o cookie de refresh.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/logout",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 18,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "fld_catalog",
+      "_type": "request_group",
+      "parentId": "wrk_helios",
+      "name": "2. Catálogo",
+      "metaSortKey": 19
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('catalog_id', body.find((item) => item.name === 'Corte na tesoura e Barba').id);\n}",
+      "_id": "req_catalog_list",
+      "_type": "request",
+      "parentId": "fld_catalog",
+      "name": "Listar catálogo (público)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/catalog",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 20,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_catalog_list_all",
+      "_type": "request",
+      "parentId": "fld_catalog",
+      "name": "Listar incluindo inativos (Hélio)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/catalog?includeInactive=true",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_helio }}"
+      },
+      "metaSortKey": 21,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('created_catalog_id', body.id);\n}",
+      "_id": "req_catalog_create",
+      "_type": "request",
+      "parentId": "fld_catalog",
+      "name": "Criar item (Hélio)",
+      "description": "Na segunda vez responde 409 (nome duplicado). Troque o nome para criar outro.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/catalog",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Sobrancelha\",\n  \"priceCents\": 2000,\n  \"durationMinutes\": 15\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_helio }}"
+      },
+      "metaSortKey": 22,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_catalog_update",
+      "_type": "request",
+      "parentId": "fld_catalog",
+      "name": "Atualizar item criado (Hélio)",
+      "description": "",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/catalog/{{ _.created_catalog_id }}",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"priceCents\": 2500,\n  \"active\": false\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_helio }}"
+      },
+      "metaSortKey": 23,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_catalog_forbidden",
+      "_type": "request",
+      "parentId": "fld_catalog",
+      "name": "Criar item como funcionário (espera 403)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/catalog",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Teste\",\n  \"priceCents\": 1000,\n  \"durationMinutes\": 15\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_rafael }}"
+      },
+      "metaSortKey": 24,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "fld_barbers",
+      "_type": "request_group",
+      "parentId": "wrk_helios",
+      "name": "3. Barbeiros e agenda",
+      "metaSortKey": 25
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('barber_id', body.find((b) => b.name === 'Rafael').id);\n  insomnia.environment.set('helio_id', body.find((b) => b.name === 'Hélio').id);\n}",
+      "_id": "req_barbers_list",
+      "_type": "request",
+      "parentId": "fld_barbers",
+      "name": "Listar barbeiros (público)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/barbers",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 26,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_barbers_free_windows",
+      "_type": "request",
+      "parentId": "fld_barbers",
+      "name": "Agenda livre do Rafael (sem serviço)",
+      "description": "Sem catalogId: devolve as janelas livres do dia (windows), independentes do serviço.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/barbers/{{ _.barber_id }}/availability?date={{ _.date }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 27,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_barbers_free_today",
+      "_type": "request",
+      "parentId": "fld_barbers",
+      "name": "Agenda livre do Rafael hoje (sem data)",
+      "description": "Sem date: considera hoje (fuso America/Sao_Paulo). Sem catalogId: devolve as janelas livres.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/barbers/{{ _.barber_id }}/availability",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 28,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('slot_starts_at', body.slots.length ? body.slots[0].startsAt : '');\n}",
+      "_id": "req_barbers_availability",
+      "_type": "request",
+      "parentId": "fld_barbers",
+      "name": "Horários do Rafael para um serviço",
+      "description": "Guarda o primeiro horário livre em slot_starts_at. Lista vazia: troque a variável date.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/barbers/{{ _.barber_id }}/availability?date={{ _.date }}&catalogId={{ _.catalog_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 29,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_barbers_wh_get",
+      "_type": "request",
+      "parentId": "fld_barbers",
+      "name": "Expediente do Rafael",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/barbers/{{ _.barber_id }}/working-hours",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 30,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_barbers_wh_put",
+      "_type": "request",
+      "parentId": "fld_barbers",
+      "name": "Alterar expediente do Rafael (Hélio)",
+      "description": "Substitui o expediente inteiro. 0 = domingo ... 6 = sábado. Este corpo é igual ao do seed.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/barbers/{{ _.barber_id }}/working-hours",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"workingHours\": [\n    {\n      \"weekday\": 2,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"12:00\"\n    },\n    {\n      \"weekday\": 2,\n      \"startTime\": \"13:00\",\n      \"endTime\": \"19:00\"\n    },\n    {\n      \"weekday\": 3,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"12:00\"\n    },\n    {\n      \"weekday\": 3,\n      \"startTime\": \"13:00\",\n      \"endTime\": \"19:00\"\n    },\n    {\n      \"weekday\": 4,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"12:00\"\n    },\n    {\n      \"weekday\": 4,\n      \"startTime\": \"13:00\",\n      \"endTime\": \"19:00\"\n    },\n    {\n      \"weekday\": 5,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"12:00\"\n    },\n    {\n      \"weekday\": 5,\n      \"startTime\": \"13:00\",\n      \"endTime\": \"19:00\"\n    },\n    {\n      \"weekday\": 6,\n      \"startTime\": \"09:00\",\n      \"endTime\": \"12:00\"\n    },\n    {\n      \"weekday\": 6,\n      \"startTime\": \"13:00\",\n      \"endTime\": \"19:00\"\n    }\n  ]\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_helio }}"
+      },
+      "metaSortKey": 31,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_timeoff_list",
+      "_type": "request",
+      "parentId": "fld_barbers",
+      "name": "Listar bloqueios (Rafael)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/barbers/{{ _.barber_id }}/time-offs",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_rafael }}"
+      },
+      "metaSortKey": 32,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('time_off_id', body.id);\n}",
+      "_id": "req_timeoff_create",
+      "_type": "request",
+      "parentId": "fld_barbers",
+      "name": "Criar bloqueio (Rafael)",
+      "description": "Responde 409 se houver agendamento ativo no período.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/barbers/{{ _.barber_id }}/time-offs",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"startsAt\": \"{{ _.date }}T17:00:00-03:00\",\n  \"endsAt\": \"{{ _.date }}T19:00:00-03:00\",\n  \"reason\": \"Dentista\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_rafael }}"
+      },
+      "metaSortKey": 33,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_timeoff_delete",
+      "_type": "request",
+      "parentId": "fld_barbers",
+      "name": "Remover bloqueio (Rafael)",
+      "description": "",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/barbers/{{ _.barber_id }}/time-offs/{{ _.time_off_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_rafael }}"
+      },
+      "metaSortKey": 34,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "fld_appointments",
+      "_type": "request_group",
+      "parentId": "wrk_helios",
+      "name": "4. Agendamentos",
+      "description": "Rode \"Disponibilidade do Rafael\" antes de criar: o primeiro horário livre é usado.",
+      "metaSortKey": 35
+    },
+    {
+      "afterResponseScript": "if (insomnia.response.code === 201) {\n  const body = insomnia.response.json();\n  insomnia.environment.set('appointment_id', body.id);\n}",
+      "_id": "req_appt_create",
+      "_type": "request",
+      "parentId": "fld_appointments",
+      "name": "Criar agendamento (cliente)",
+      "description": "Reenviar sem rodar a disponibilidade de novo responde 409 (horário já reservado).",
+      "method": "POST",
+      "url": "{{ _.base_url }}/appointments",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"barberId\": \"{{ _.barber_id }}\",\n  \"catalogId\": \"{{ _.catalog_id }}\",\n  \"startsAt\": \"{{ _.slot_starts_at }}\",\n  \"notes\": \"Degradê baixo, barba desenhada\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cliente }}"
+      },
+      "metaSortKey": 36,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_appt_list_client",
+      "_type": "request",
+      "parentId": "fld_appointments",
+      "name": "Meus agendamentos (cliente)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/appointments",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cliente }}"
+      },
+      "metaSortKey": 37,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_appt_list_rafael",
+      "_type": "request",
+      "parentId": "fld_appointments",
+      "name": "Agenda do dia (Rafael)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/appointments?date={{ _.date }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_rafael }}"
+      },
+      "metaSortKey": 38,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_appt_list_helio",
+      "_type": "request",
+      "parentId": "fld_appointments",
+      "name": "Todos os agendamentos (Hélio)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/appointments",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_helio }}"
+      },
+      "metaSortKey": 39,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_appt_list_helio_filter",
+      "_type": "request",
+      "parentId": "fld_appointments",
+      "name": "Hélio filtrando por barbeiro e status",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/appointments?barberId={{ _.barber_id }}&status=SCHEDULED",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_helio }}"
+      },
+      "metaSortKey": 40,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_appt_get",
+      "_type": "request",
+      "parentId": "fld_appointments",
+      "name": "Detalhe do agendamento (cliente)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/appointments/{{ _.appointment_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cliente }}"
+      },
+      "metaSortKey": 41,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_appt_status",
+      "_type": "request",
+      "parentId": "fld_appointments",
+      "name": "Marcar como concluído (Rafael)",
+      "description": "Antes do horário de início responde 422. Valores: COMPLETED ou NO_SHOW.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/appointments/{{ _.appointment_id }}/status",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"status\": \"COMPLETED\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_rafael }}"
+      },
+      "metaSortKey": 42,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_appt_cancel",
+      "_type": "request",
+      "parentId": "fld_appointments",
+      "name": "Cancelar (cliente)",
+      "description": "O cliente só cancela com pelo menos 1h de antecedência.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/appointments/{{ _.appointment_id }}/cancel",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cliente }}"
+      },
+      "metaSortKey": 43,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "fld_users",
+      "_type": "request_group",
+      "parentId": "wrk_helios",
+      "name": "5. Usuários (Hélio)",
+      "metaSortKey": 44
+    },
+    {
+      "_id": "req_users_list",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Listar usuários",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/users",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_helio }}"
+      },
+      "metaSortKey": 45,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_users_list_employees",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Listar funcionários",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/users?role=EMPLOYEE",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_helio }}"
+      },
+      "metaSortKey": 46,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_users_create_employee",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Cadastrar funcionário",
+      "description": "Sem expediente: use \"Alterar expediente\" com o id dele para liberar horários.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/users/employees",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Novo Barbeiro\",\n  \"email\": \"{% faker 'randomEmail' %}\",\n  \"phone\": \"11966665555\",\n  \"password\": \"senhaforte123\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_helio }}"
+      },
+      "metaSortKey": 47,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "fld_errors",
+      "_type": "request_group",
+      "parentId": "wrk_helios",
+      "name": "6. Casos de erro",
+      "description": "Cada requisição demonstra uma regra. O status esperado está no nome.",
+      "metaSortKey": 48
+    },
+    {
+      "_id": "req_err_past",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Agendar no passado (422)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/appointments",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"barberId\": \"{{ _.barber_id }}\",\n  \"catalogId\": \"{{ _.catalog_id }}\",\n  \"startsAt\": \"2020-01-07T10:00:00-03:00\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cliente }}"
+      },
+      "metaSortKey": 49,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_far",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Agendar com mais de 30 dias (422)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/appointments",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"barberId\": \"{{ _.barber_id }}\",\n  \"catalogId\": \"{{ _.catalog_id }}\",\n  \"startsAt\": \"2030-01-08T10:00:00-03:00\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cliente }}"
+      },
+      "metaSortKey": 50,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_grid",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Fora da grade de 15 min (422)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/appointments",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"barberId\": \"{{ _.barber_id }}\",\n  \"catalogId\": \"{{ _.catalog_id }}\",\n  \"startsAt\": \"{{ _.date }}T14:07:00-03:00\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cliente }}"
+      },
+      "metaSortKey": 51,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_validation",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Validação Zod (400)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/register",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"X\",\n  \"email\": \"nao-e-email\",\n  \"password\": \"123\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 52,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_no_token",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Sem token (401)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/appointments",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 53,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_wrong_password",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Senha errada (401)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"cliente@helios.test\",\n  \"password\": \"errada\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 54,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_employee_books",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Funcionário tentando agendar (403)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/appointments",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"barberId\": \"{{ _.helio_id }}\",\n  \"catalogId\": \"{{ _.catalog_id }}\",\n  \"startsAt\": \"{{ _.slot_starts_at }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_rafael }}"
+      },
+      "metaSortKey": 55,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_employee_other_agenda",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Funcionário vendo agenda do Hélio (403)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/appointments?barberId={{ _.helio_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_rafael }}"
+      },
+      "metaSortKey": 56,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_inactive_anon",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Itens inativos sem login (401)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/catalog?includeInactive=true",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 57,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_inactive_client",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Itens inativos como cliente (403)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/catalog?includeInactive=true",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cliente }}"
+      },
+      "metaSortKey": 58,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_register_role",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Cadastro tentando virar dono (400)",
+      "description": "Campos não previstos são recusados em vez de ignorados.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/register",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Espertinho\",\n  \"email\": \"{% faker 'randomEmail' %}\",\n  \"password\": \"senhaforte123\",\n  \"role\": \"OWNER\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {},
+      "metaSortKey": 59,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_appt_extra_field",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Agendamento com campo extra (400)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/appointments",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"barberId\": \"{{ _.barber_id }}\",\n  \"catalogId\": \"{{ _.catalog_id }}\",\n  \"startsAt\": \"{{ _.slot_starts_at }}\",\n  \"priceCents\": 0\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cliente }}"
+      },
+      "metaSortKey": 60,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    },
+    {
+      "_id": "req_err_unknown_query",
+      "_type": "request",
+      "parentId": "fld_errors",
+      "name": "Filtro desconhecido na query (400)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/appointments?clientId={{ _.helio_id }}",
+      "body": {},
+      "headers": [],
+      "parameters": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cliente }}"
+      },
+      "metaSortKey": 61,
+      "settingSendCookies": true,
+      "settingStoreCookies": true
+    }
+  ]
+}
