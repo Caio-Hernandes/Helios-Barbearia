@@ -15,9 +15,9 @@ export const REFRESH_COOKIE_NAME = 'refresh_token';
  */
 export const refreshCookieOptions: CookieOptions = {
   httpOnly: true,
-  secure: isProduction, // em produção, apenas HTTPS
+  secure: env.COOKIE_SECURE ?? isProduction, // em produção, apenas HTTPS (salvo COOKIE_SECURE=false)
   sameSite: 'strict',
-  path: '/auth',
+  path: env.COOKIE_PATH,
   maxAge: REFRESH_TOKEN_TTL_SECONDS * 1000,
 };
 

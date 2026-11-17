@@ -1,22 +1,64 @@
+# Barbearia Hélios: banco, API e frontend.
+#
+#   docker compose up -d --build      -> app em http://localhost:8080
+#   docker compose up -d postgres     -> só o banco (desenvolvimento local)
+#
+# Os segredos vêm do arquivo .env da raiz (copie de .env.example).
+
 services:
   postgres:
     image: postgres:17-alpine
     container_name: helios-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: helios
-      POSTGRES_PASSWORD: helios
-      POSTGRES_DB: helios
+      POSTGRES_USER: ${POSTGRES_USER:-helios}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-helios}
+      POSTGRES_DB: ${POSTGRES_DB:-helios}
       TZ: America/Sao_Paulo
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U helios -d helios"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-helios} -d ${POSTGRES_DB:-helios}"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build: ./backend
+    image: helios-api
+    container_name: helios-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3333
+      DATABASE_URL: postgresql://${POSTGRES_USER:-helios}:${POSTGRES_PASSWORD:-helios}@postgres:5432/${POSTGRES_DB:-helios}?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Defina JWT_ACCESS_SECRET no .env da raiz}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Defina JWT_REFRESH_SECRET no .env da raiz}
+      # A API fica atrás do nginx em /api (mesma origem do frontend)
+      CORS_ORIGIN: ${APP_URL:-http://localhost:8080}
+      COOKIE_PATH: /api/auth
+      # Sem HTTPS na frente, o cookie não pode exigir Secure. Use "true" quando houver HTTPS.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    # Sem porta publicada: o acesso é pelo nginx (http://localhost:8080/api)
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
+    image: helios-web
+    container_name: helios-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8080}:80"
 
 volumes:
   pgdata:

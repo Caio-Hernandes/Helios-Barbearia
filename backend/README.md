@@ -31,6 +31,19 @@ Todos os usuários usam a senha `Helios@2026`.
 
 Expediente dos barbeiros: terça a sábado, 09:00–12:00 e 13:00–19:00. Para mudar, use `PUT /barbers/:id/working-hours`.
 
+### Dados de demonstração
+
+```bash
+npm run db:seed:demo            # ~100 agendamentos
+npm run db:seed:demo -- 150     # quantidade aproximada
+```
+
+- **O que cria:** 12 clientes fictícios (`@demo.helios.test`, mesma senha do seed) e um movimento realista. São cerca de 45 dias de histórico (concluídos, faltas, cancelados e algumas baixas automáticas) e 3 semanas de horários marcados.
+- **Regras respeitadas:** expediente, grade de 15 min, antecedência mínima e sem sobreposição de barbeiro ou de cliente.
+- **Cliente Teste:** também ganha histórico e horários marcados, para mostrar a visão do cliente.
+- **O que não faz:** não apaga nada. Os horários já ocupados são evitados.
+- **Ordem:** rode depois do `db:seed`, que cria os serviços, os barbeiros e os expedientes.
+
 | Catálogo | Preço | Duração |
 |---|---|---|
 | Barba | R$ 50 | 30 min |
@@ -45,6 +58,16 @@ Os preços ficam em **centavos** (`priceCents: 5000` = R$ 50,00).
 
 - **Access token** (JWT, 15 min): vem no corpo da resposta de login, cadastro e refresh. Envie no header `Authorization: Bearer <token>`.
 - **Refresh token** (JWT, 15 dias): fica num cookie `refresh_token` **httpOnly**, `SameSite=Strict`, com `path=/auth`. Em produção ele também é `Secure`. O JavaScript do navegador não consegue ler esse cookie.
+  - Caminho e `Secure` são configuráveis por `COOKIE_PATH` e `COOKIE_SECURE`. No Docker, a API fica atrás do nginx em `/api`, então o compose usa `COOKIE_PATH=/api/auth` e, sem HTTPS, `COOKIE_SECURE=false`.
+
+## Docker
+
+O [`Dockerfile`](Dockerfile) tem build em etapas e roda como usuário `node`:
+- **Build:** instala tudo, gera o Prisma Client (com o engine para Alpine), compila a API e o seed.
+- **Imagem final:** só dependências de produção. Inclui o CLI do Prisma, por isso ele está em `dependencies`.
+- **Ao subir:** roda `prisma migrate deploy` e inicia a API. O health check consulta `/health`.
+
+Para popular o banco no container: `docker compose exec api npm run seed:prod` (o seed compilado fica em `dist-seed/`). Como subir a stack inteira está no [README da raiz](../README.md).
 - `POST /auth/refresh` gera um par novo de tokens (rotação). Por isso a sessão expira após **15 dias sem uso**.
 - O refresh token **não é salvo no banco** (é stateless). Consequência: o logout só apaga o cookie daquele navegador, e não há como revogar um token roubado antes de ele expirar. Se um dia precisar de "sair de todos os dispositivos", basta adicionar uma tabela de sessões.
 

@@ -16,6 +16,17 @@ Para apontar para outra API, crie um `.env.local` com `VITE_API_URL=http://ender
 
 Outros comandos: `npm run build` (gera `dist/`), `npm run preview` (serve o build) e `npm run lint`.
 
+## Docker e nginx
+
+- **[`Dockerfile`](Dockerfile):** gera o build com Node e serve com `nginx:1.27-alpine`. O build usa `VITE_API_URL=/api` (argumento de build), um caminho relativo à própria origem.
+- **[`nginx.conf`](nginx.conf):**
+  - repassa `/api/*` para o serviço `api` do compose (`/api/auth/login` → `http://api:3333/auth/login`);
+  - devolve o `index.html` para as rotas do React Router (`/agenda`, `/painel`...);
+  - cache longo e imutável para `/assets/*`, cujos nomes têm hash, e `no-cache` para o `index.html`;
+  - gzip e cabeçalhos de segurança nos arquivos estáticos. As respostas da API mantêm os cabeçalhos do helmet.
+
+Como subir tudo está no [README da raiz](../README.md).
+
 ## Páginas
 
 | Rota | Quem acessa | O que faz |

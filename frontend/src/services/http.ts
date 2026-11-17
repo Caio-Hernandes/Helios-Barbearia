@@ -59,7 +59,8 @@ interface RequestOptions {
 }
 
 function buildUrl(path: string, query?: Record<string, QueryValue>): string {
-  const url = new URL(path, API_URL);
+  // API_URL pode ser absoluta (http://localhost:3333) ou relativa ao site (/api, atrás do nginx)
+  const url = new URL(`${API_URL.replace(/\/+$/, '')}${path}`, window.location.origin);
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, String(value));
   }
