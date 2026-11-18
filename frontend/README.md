@@ -35,6 +35,7 @@ Como subir tudo está no [README da raiz](../README.md).
 | `/agendar` | cliente | Escolhe serviço, profissional, dia e horário; confirma com observações |
 | `/meus-agendamentos` | cliente | Próximos horários e histórico; cancela até 1h antes |
 | `/agenda` | barbeiro e dono | Agenda do dia com janelas livres. O barbeiro vê a própria; o dono vê a de todos e filtra por profissional. Concluir, marcar falta, cancelar e corrigir baixas (as automáticas aparecem com a etiqueta "automático") |
+| `/expediente` | barbeiro e dono | Horário semanal (o dono edita o de qualquer profissional; o barbeiro vê o próprio) e folgas/bloqueios (o dono para todos, o barbeiro para si) |
 | `/painel` | dono | Atendimentos, faturamento, ticket médio, faltas, desempenho por profissional, serviços mais pedidos, status, clientes frequentes e histórico |
 
 `/` leva cada papel para a sua página inicial. Uma rota de outro papel redireciona para a página inicial do papel atual.

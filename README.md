@@ -3,8 +3,8 @@
 Sistema de agendamento da Barbearia Hélios.
 
 - **Clientes:** se cadastram, escolhem serviço, profissional e horário, e acompanham os próprios agendamentos.
-- **Barbeiros:** veem a agenda do dia e dão baixa nos atendimentos.
-- **Dono:** acompanha a agenda de todos e um painel com faturamento, horários de pico e desempenho por profissional.
+- **Barbeiros:** veem a agenda do dia, dão baixa nos atendimentos e cadastram as próprias folgas.
+- **Dono:** acompanha a agenda de todos, define o expediente de cada profissional e tem um painel com faturamento, horários de pico e desempenho por profissional.
 
 ## Telas
 
@@ -41,6 +41,14 @@ Sistema de agendamento da Barbearia Hélios.
 **Status dos agendamentos, desempenho por profissional, serviços mais pedidos e clientes frequentes**
 
 ![Status dos agendamentos e indicadores](docs/screenshots/04-status-e-indicadores.png)
+
+**Expediente:** horário semanal e folgas de cada profissional.
+
+- **Horário semanal:** o dono escolhe o profissional, liga ou desliga cada dia e define um ou mais períodos de atendimento, de 15 em 15 minutos. A pausa do almoço é o espaço entre dois períodos (ex.: 09:00–12:00 e 13:00–19:00). A tela impede períodos sobrepostos ou com início depois do fim, e as mudanças valem na hora para os horários oferecidos aos clientes.
+- **Folgas e bloqueios:** um ou mais dias inteiros, ou parte de um dia, com motivo opcional (férias, consulta médica...). O período some da agenda dos clientes. Se já houver cliente marcado nele, o bloqueio é recusado e a tela mostra quais horários precisam ser cancelados ou remarcados antes.
+- **Permissões:** o dono gerencia o expediente e as folgas de todos. O barbeiro vê o próprio expediente, só para leitura, e cadastra as próprias folgas.
+
+![Expediente: horário semanal e folgas](docs/screenshots/10-expediente.png)
 
 ### Navegação
 

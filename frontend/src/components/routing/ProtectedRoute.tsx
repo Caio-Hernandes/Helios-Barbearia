@@ -21,12 +21,19 @@ export function ProtectedRoute({ roles }: { roles?: Role[] }) {
   return <Outlet />;
 }
 
-/** Páginas só para quem NÃO está logado (login/cadastro). */
+/**
+ * Páginas só para quem NÃO está logado (login/cadastro).
+ * Ao logar, volta para a página que a pessoa tentou abrir (state.from) ou para a inicial do papel.
+ */
 export function PublicOnlyRoute({ children }: { children: ReactNode }) {
   const { status, user } = useAuth();
+  const location = useLocation();
 
   if (status === 'loading') return <FullPageLoader />;
-  if (user) return <Navigate to={homePathFor(user.role)} replace />;
+  if (user) {
+    const from = (location.state as { from?: string } | null)?.from;
+    return <Navigate to={from && from !== '/login' ? from : homePathFor(user.role)} replace />;
+  }
 
   return children;
 }

@@ -73,7 +73,34 @@ export interface WindowsAvailability {
   windows: FreeWindow[];
 }
 
-export type AppointmentStatus = 'SCHEDULED' | 'CANCELED' | 'COMPLETED' | 'NO_SHOW';
+/** Período de atendimento do expediente semanal. 0 = domingo ... 6 = sábado; horários "HH:mm". */
+export interface WorkingHoursItem {
+  weekday: number;
+  startTime: string;
+  endTime: string;
+}
+
+export interface WorkingHours extends WorkingHoursItem {
+  id: string;
+}
+
+/** Folga ou bloqueio pontual na agenda de um barbeiro. */
+export interface TimeOff {
+  id: string;
+  barberId: string;
+  startsAt: string;
+  endsAt: string;
+  reason: string | null;
+  createdAt: string;
+}
+
+export interface CreateTimeOffInput {
+  startsAt: string;
+  endsAt: string;
+  reason?: string;
+}
+
+export type AppointmentStatus ='SCHEDULED' | 'CANCELED' | 'COMPLETED' | 'NO_SHOW';
 
 export interface Appointment {
   id: string;

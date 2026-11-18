@@ -76,7 +76,7 @@ Para popular o banco no container: `docker compose exec api npm run seed:prod` (
 Os valores ficam em `src/domain/scheduling/scheduling.rules.ts`.
 
 - Antecedência **mínima de 1 hora** e **máxima de 30 dias**. Horários no passado são recusados.
-- Os horários seguem uma grade de 15 em 15 minutos e precisam caber inteiros dentro do expediente.
+- Os horários seguem uma grade de 15 em 15 minutos e precisam caber inteiros dentro do expediente. Períodos do expediente que se encostam ou se sobrepõem (ex.: 09:00–18:00 e 18:00–19:00) contam como um só.
 - O **cliente** pode cancelar até **1 hora antes**. O barbeiro do agendamento e o dono podem cancelar a qualquer momento.
 - **Baixa automática:** a cada 5 minutos (e ao subir a API), os agendamentos cujo horário de término já passou e que continuam como `SCHEDULED` viram `COMPLETED`, com `autoCompleted: true`. O job fica em `src/jobs/auto-complete.job.ts`.
 - **Correção de baixa:** depois do horário de início, o barbeiro do agendamento ou o dono podem marcar `COMPLETED` ou `NO_SHOW`, e trocar entre os dois a qualquer momento (inclusive uma baixa automática). Toda alteração manual deixa `autoCompleted: false`. Agendamentos cancelados não podem ser alterados.

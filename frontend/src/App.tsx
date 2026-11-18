@@ -9,6 +9,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { MyAppointmentsPage } from './pages/MyAppointmentsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { SchedulePage } from './pages/SchedulePage';
+import { WorkSchedulePage } from './pages/WorkSchedulePage';
 
 export function App() {
   return (
@@ -37,6 +38,7 @@ export function App() {
 
                 <Route element={<ProtectedRoute roles={['EMPLOYEE', 'OWNER']} />}>
                   <Route path="agenda" element={<SchedulePage />} />
+                  <Route path="expediente" element={<WorkSchedulePage />} />
                 </Route>
 
                 <Route element={<ProtectedRoute roles={['OWNER']} />}>

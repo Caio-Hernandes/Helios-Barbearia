@@ -40,7 +40,11 @@ async function loadBarberDay(barberId: string, day: DateTime) {
   ]);
 
   return {
-    shifts: workingHours.map((wh) => Interval.fromDateTimes(atTime(dayStart, wh.startTime), atTime(dayStart, wh.endTime))),
+    // Une intervalos que se encostam ou se sobrepõem (ex.: 09:00-18:00 + 18:00-19:00 = 09:00-19:00),
+    // para um serviço poder atravessar a emenda
+    shifts: Interval.merge(
+      workingHours.map((wh) => Interval.fromDateTimes(atTime(dayStart, wh.startTime), atTime(dayStart, wh.endTime))),
+    ),
     timeOffs: timeOffs.map(toInterval),
     appointments: appointments.map(toInterval),
   };

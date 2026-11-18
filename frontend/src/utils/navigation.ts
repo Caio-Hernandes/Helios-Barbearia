@@ -1,4 +1,4 @@
-import { CalendarDays, CalendarPlus, ChartPie, ListChecks, type LucideIcon } from 'lucide-react';
+import { CalendarDays, CalendarPlus, ChartPie, Clock, ListChecks, type LucideIcon } from 'lucide-react';
 import type { Role } from '../types';
 
 export interface NavItem {
@@ -32,7 +32,13 @@ export function navigationFor(role: Role): NavSection[] {
   }
 
   const sections: NavSection[] = [
-    { title: 'Atendimento', items: [{ to: '/agenda', label: 'Agenda', icon: CalendarDays }] },
+    {
+      title: 'Atendimento',
+      items: [
+        { to: '/agenda', label: 'Agenda', icon: CalendarDays },
+        { to: '/expediente', label: 'Expediente', icon: Clock },
+      ],
+    },
   ];
   if (role === 'OWNER') {
     sections.push({ title: 'Administração', items: [{ to: '/painel', label: 'Painel', icon: ChartPie }] });
