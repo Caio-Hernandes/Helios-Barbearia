@@ -83,6 +83,7 @@ Os valores ficam em `src/domain/scheduling/scheduling.rules.ts`.
 - Um barbeiro não pode ter dois agendamentos ativos sobrepostos. Isso é garantido também pelo banco (constraint `appointment_no_overlap`), o que cobre reservas simultâneas.
 - Um cliente também não pode ter dois agendamentos ao mesmo tempo.
 - Só é possível criar um bloqueio (folga) num período sem agendamentos ativos.
+- **Mudança de expediente:** se algum agendamento futuro ficar fora do novo horário, `PUT /barbers/:id/working-hours` responde **409** com a lista (`details.appointments`: horário, cliente e serviço). Para salvar mesmo assim, envie `confirm: true`. Esses agendamentos continuam marcados, porque a mudança vale para novos agendamentos; quem não for atender deve cancelá-los.
 - Fuso de referência: `America/Sao_Paulo`. As datas são gravadas em UTC (`timestamptz`).
 
 ## Rotas
@@ -112,7 +113,7 @@ Público = não precisa de token.
 | GET | `/barbers/:barberId/availability?date=YYYY-MM-DD` | público. `date` é opcional: sem ela, vale o dia de hoje (fuso de São Paulo). Devolve `windows`: as janelas livres do dia, independentes do serviço (ex.: `09:00–10:00`, `11:15–12:00`) |
 | GET | `/barbers/:barberId/availability?date=YYYY-MM-DD&catalogId=...` | público. Devolve `slots`: os horários de início em que **aquele** serviço cabe inteiro (a duração muda o resultado) |
 | GET | `/barbers/:barberId/working-hours` | público |
-| PUT | `/barbers/:barberId/working-hours` | OWNER. Corpo: `{ workingHours: [{ weekday, startTime, endTime }] }` (substitui o expediente inteiro) |
+| PUT | `/barbers/:barberId/working-hours` | OWNER. Corpo: `{ workingHours: [{ weekday, startTime, endTime }], confirm? }` (substitui o expediente inteiro; 409 se deixar agendamentos futuros de fora, a menos que `confirm: true`) |
 | GET | `/barbers/:barberId/time-offs` | OWNER, ou o próprio barbeiro |
 | POST | `/barbers/:barberId/time-offs` | OWNER, ou o próprio barbeiro. Corpo: `{ startsAt, endsAt, reason? }` |
 | DELETE | `/barbers/:barberId/time-offs/:timeOffId` | OWNER, ou o próprio barbeiro |

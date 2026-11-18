@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon';
+import { DateTime, Interval } from 'luxon';
 
 /** Fuso de referência da barbearia (expedientes e datas "YYYY-MM-DD"). */
 export const TIMEZONE = 'America/Sao_Paulo';
@@ -59,4 +59,21 @@ export function atTime(day: DateTime, hhmm: string): DateTime {
 /** Data de hoje ("YYYY-MM-DD") no fuso da barbearia. */
 export function todayLocalDate(): string {
   return DateTime.now().setZone(TIMEZONE).toISODate()!;
+}
+
+type WorkingPeriod = { weekday: number; startTime: string; endTime: string };
+
+/**
+ * true se o atendimento [start, end) cabe inteiro num período do expediente
+ * daquele dia da semana (períodos encostados contam como um só).
+ */
+export function fitsWorkingHours(periods: WorkingPeriod[], start: DateTime, end: DateTime): boolean {
+  const day = start.setZone(TIMEZONE).startOf('day');
+  const shifts = Interval.merge(
+    periods
+      .filter((p) => p.weekday === toWeekday(day))
+      .map((p) => Interval.fromDateTimes(atTime(day, p.startTime), atTime(day, p.endTime))),
+  );
+  const appointment = Interval.fromDateTimes(start, end);
+  return shifts.some((shift) => shift.engulfs(appointment));
 }

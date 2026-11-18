@@ -24,9 +24,15 @@ export const barbersService = {
 
   getWorkingHours: (barberId: string) => apiRequest<WorkingHours[]>(`/barbers/${barberId}/working-hours`),
 
-  /** Substitui o expediente inteiro (apenas o dono). */
-  replaceWorkingHours: (barberId: string, workingHours: WorkingHoursItem[]) =>
-    apiRequest<WorkingHours[]>(`/barbers/${barberId}/working-hours`, { method: 'PUT', body: { workingHours } }),
+  /**
+   * Substitui o expediente inteiro (apenas o dono). Sem `confirm`, a API responde 409
+   * se algum agendamento futuro ficar fora do novo expediente (details.appointments).
+   */
+  replaceWorkingHours: (barberId: string, workingHours: WorkingHoursItem[], confirm = false) =>
+    apiRequest<WorkingHours[]>(`/barbers/${barberId}/working-hours`, {
+      method: 'PUT',
+      body: confirm ? { workingHours, confirm } : { workingHours },
+    }),
 
   // ---- Folgas e bloqueios (dono para todos, barbeiro para si) ----
 

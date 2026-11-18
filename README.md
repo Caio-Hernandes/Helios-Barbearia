@@ -44,7 +44,7 @@ Sistema de agendamento da Barbearia Hélios.
 
 **Expediente:** horário semanal e folgas de cada profissional.
 
-- **Horário semanal:** o dono escolhe o profissional, liga ou desliga cada dia e define um ou mais períodos de atendimento, de 15 em 15 minutos. A pausa do almoço é o espaço entre dois períodos (ex.: 09:00–12:00 e 13:00–19:00). A tela impede períodos sobrepostos ou com início depois do fim, e as mudanças valem na hora para os horários oferecidos aos clientes.
+- **Horário semanal:** o dono escolhe o profissional, liga ou desliga cada dia e define um ou mais períodos de atendimento, de 15 em 15 minutos. A pausa do almoço é o espaço entre dois períodos (ex.: 09:00–12:00 e 13:00–19:00). A tela impede períodos sobrepostos ou com início depois do fim, e as mudanças valem na hora para os horários oferecidos aos clientes. Se algum agendamento futuro ficar fora do novo horário, a tela lista esses atendimentos e pede confirmação: eles continuam marcados, e quem não for atender deve cancelá-los na Agenda.
 - **Folgas e bloqueios:** um ou mais dias inteiros, ou parte de um dia, com motivo opcional (férias, consulta médica...). O período some da agenda dos clientes. Se já houver cliente marcado nele, o bloqueio é recusado e a tela mostra quais horários precisam ser cancelados ou remarcados antes.
 - **Permissões:** o dono gerencia o expediente e as folgas de todos. O barbeiro vê o próprio expediente, só para leitura, e cadastra as próprias folgas.
 

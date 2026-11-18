@@ -1,10 +1,11 @@
 import { Role } from '@prisma/client';
+import { DateTime } from 'luxon';
 import { BusinessRuleError, ConflictError, ForbiddenError, NotFoundError } from '../../shared/errors/app-error';
 import { usersRepository } from '../users/users.repository';
 import { catalogRepository } from '../catalog/catalog.repository';
 import { schedulingRepository } from '../../domain/scheduling/scheduling.repository';
 import { schedulingService } from '../../domain/scheduling/scheduling.service';
-import { localDay, todayLocalDate } from '../../domain/scheduling/scheduling.rules';
+import { fitsWorkingHours, localDay, todayLocalDate } from '../../domain/scheduling/scheduling.rules';
 import { barbersRepository } from './barbers.repository';
 import type { CreateTimeOffInput, WorkingHoursInput } from './barbers.schemas';
 
@@ -59,7 +60,7 @@ export const barbersService = {
     return barbersRepository.listWorkingHours(barberId);
   },
 
-  async replaceWorkingHours(barberId: string, { workingHours }: WorkingHoursInput) {
+  async replaceWorkingHours(barberId: string, { workingHours, confirm }: WorkingHoursInput) {
     await ensureBarber(barberId);
 
     // Intervalos do mesmo dia não podem se sobrepor
@@ -70,6 +71,31 @@ export const barbersService = {
       if (prev.weekday === curr.weekday && curr.startTime < prev.endTime) {
         throw new BusinessRuleError(
           `Intervalos sobrepostos no dia ${curr.weekday}: ${prev.startTime}-${prev.endTime} e ${curr.startTime}-${curr.endTime}.`,
+        );
+      }
+    }
+
+    // Agendamentos futuros que ficariam fora do novo expediente continuam marcados,
+    // mas quem altera precisa saber disso e confirmar
+    if (!confirm) {
+      const upcoming = await barbersRepository.listUpcomingScheduled(barberId, new Date());
+      const outside = upcoming.filter(
+        (a) => !fitsWorkingHours(sorted, DateTime.fromJSDate(a.startsAt), DateTime.fromJSDate(a.endsAt)),
+      );
+      if (outside.length > 0) {
+        throw new ConflictError(
+          outside.length === 1
+            ? '1 agendamento futuro fica fora do novo expediente.'
+            : `${outside.length} agendamentos futuros ficam fora do novo expediente.`,
+          {
+            appointments: outside.map((a) => ({
+              id: a.id,
+              startsAt: a.startsAt,
+              endsAt: a.endsAt,
+              clientName: a.client.name,
+              catalogName: a.catalog.name,
+            })),
+          },
         );
       }
     }

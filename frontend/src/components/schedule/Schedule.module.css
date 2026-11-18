@@ -226,3 +226,35 @@
 .timeOffList li strong {
   font-weight: 600;
 }
+
+/* Aviso: agendamentos futuros fora do novo expediente */
+.warning {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--warning-soft);
+  border: 1px solid var(--warning);
+  font-size: 14px;
+}
+
+.warningTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--warning);
+}
+
+.warning ul {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.warning p {
+  margin: 0;
+  color: var(--text-muted);
+}

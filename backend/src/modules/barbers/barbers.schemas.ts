@@ -33,6 +33,11 @@ export const workingHoursBodySchema = z.strictObject({
         }),
     )
     .max(50),
+  /**
+   * Confirma a troca mesmo que agendamentos futuros fiquem fora do novo expediente
+   * (eles continuam marcados). Sem isso, a API responde 409 listando esses agendamentos.
+   */
+  confirm: z.boolean().optional(),
 });
 export type WorkingHoursInput = z.infer<typeof workingHoursBodySchema>;
 

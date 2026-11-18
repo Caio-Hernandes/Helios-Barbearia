@@ -1,14 +1,17 @@
-import { LoaderCircle, Plus, Trash2 } from 'lucide-react';
+import { LoaderCircle, Plus, Trash2, TriangleAlert } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAsync } from '../../hooks/useAsync';
 import { barbersService } from '../../services/barbers.service';
-import { errorMessage } from '../../services/http';
+import { ApiError, errorMessage } from '../../services/http';
 import type { WorkingHoursItem } from '../../types';
+import { formatShortDate, formatTime, toLocalDate } from '../../utils/format';
 import { ErrorAlert, Spinner, SuccessAlert } from '../ui/Feedback';
 import styles from './Schedule.module.css';
 import { TIME_OPTIONS, WEEKDAY_NAMES } from './timeOptions';
 
 type Interval = { startTime: string; endTime: string };
+/** Agendamento futuro que ficaria fora do novo expediente (vem no 409 da API). */
+type OutsideAppointment = { id: string; startsAt: string; endsAt: string; clientName: string; catalogName: string };
 type Week = Interval[][]; // índice = dia da semana (0 = domingo)
 
 /** Ordem de exibição: segunda a domingo. */
@@ -48,6 +51,7 @@ export function WorkingHoursEditor({ barberId, editable }: WorkingHoursEditorPro
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [outside, setOutside] = useState<OutsideAppointment[] | null>(null);
 
   const original = useMemo(() => toWeek(saved.data ?? []), [saved.data]);
 
@@ -55,6 +59,7 @@ export function WorkingHoursEditor({ barberId, editable }: WorkingHoursEditorPro
   useEffect(() => {
     setWeek(original);
     setError(null);
+    setOutside(null);
   }, [original]);
 
   // Trocar de barbeiro limpa a mensagem de sucesso anterior
@@ -67,17 +72,24 @@ export function WorkingHoursEditor({ barberId, editable }: WorkingHoursEditorPro
   function update(weekday: number, change: (day: Interval[]) => Interval[]) {
     setWeek((w) => w.map((day, i) => (i === weekday ? change(day) : day)));
     setSuccess(false);
+    setOutside(null);
   }
 
-  async function save() {
+  /** Sem confirmação, a API avisa (409) se algum agendamento futuro ficar fora do novo expediente. */
+  async function save(confirm = false) {
     setSaving(true);
     setError(null);
     try {
-      await barbersService.replaceWorkingHours(barberId, toItems(week));
+      await barbersService.replaceWorkingHours(barberId, toItems(week), confirm);
+      setOutside(null);
       setSuccess(true);
       saved.reload();
     } catch (err) {
-      setError(errorMessage(err));
+      const conflicts = err instanceof ApiError && err.status === 409
+        ? (err.details as { appointments?: OutsideAppointment[] } | undefined)?.appointments
+        : undefined;
+      if (conflicts?.length) setOutside(conflicts);
+      else setError(errorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -97,7 +109,7 @@ export function WorkingHoursEditor({ barberId, editable }: WorkingHoursEditorPro
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setWeek(original)} disabled={saving}>
               Descartar
             </button>
-            <button type="button" className="btn btn-primary btn-sm" onClick={save} disabled={saving || hasProblems}>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => save()} disabled={saving || hasProblems || Boolean(outside)}>
               {saving && <LoaderCircle size={16} className="spin" />}
               Salvar alterações
             </button>
@@ -108,6 +120,39 @@ export function WorkingHoursEditor({ barberId, editable }: WorkingHoursEditorPro
       {saved.loading && !saved.data && <Spinner />}
       {saved.error && <ErrorAlert message={saved.error} />}
       {error && <ErrorAlert message={error} />}
+      {outside && (
+        <div className={styles.warning} role="alert">
+          <div className={styles.warningTitle}>
+            <TriangleAlert size={18} />
+            <strong>
+              {outside.length === 1
+                ? '1 agendamento futuro fica fora do novo expediente'
+                : `${outside.length} agendamentos futuros ficam fora do novo expediente`}
+            </strong>
+          </div>
+          <ul>
+            {outside.map((a) => (
+              <li key={a.id}>
+                {formatShortDate(toLocalDate(a.startsAt))}, {formatTime(a.startsAt)}–{formatTime(a.endsAt)} · {a.clientName} ·{' '}
+                {a.catalogName}
+              </li>
+            ))}
+          </ul>
+          <p>
+            Esses agendamentos <strong>continuam marcados</strong>: a mudança só vale para novos agendamentos. Se o
+            profissional não vai atender, cancele-os na Agenda.
+          </p>
+          <div className={styles.headerActions}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOutside(null)} disabled={saving}>
+              Revisar
+            </button>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => save(true)} disabled={saving}>
+              {saving && <LoaderCircle size={16} className="spin" />}
+              Salvar mesmo assim
+            </button>
+          </div>
+        </div>
+      )}
       {success && !dirty && <SuccessAlert>Expediente salvo. Os horários disponíveis para agendamento já foram atualizados.</SuccessAlert>}
 
       {saved.data && (

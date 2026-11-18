@@ -1,3 +1,4 @@
+import { AppointmentStatus } from '@prisma/client';
 import { prisma } from '../../shared/database/prisma';
 import type { WorkingHoursInput } from './barbers.schemas';
 
@@ -17,6 +18,15 @@ export const barbersRepository = {
       prisma.workingHours.createMany({ data: items.map((item) => ({ ...item, barberId })) }),
     ]);
     return this.listWorkingHours(barberId);
+  },
+
+  /** Agendamentos ativos do barbeiro a partir de `from`, com nome do cliente e do serviço. */
+  listUpcomingScheduled(barberId: string, from: Date) {
+    return prisma.appointment.findMany({
+      where: { barberId, status: AppointmentStatus.SCHEDULED, startsAt: { gte: from } },
+      select: { id: true, startsAt: true, endsAt: true, client: { select: { name: true } }, catalog: { select: { name: true } } },
+      orderBy: { startsAt: 'asc' },
+    });
   },
 
   listUpcomingTimeOffs(barberId: string, from: Date) {
